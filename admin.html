@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency Ola - Admin Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Segoe UI', Arial, sans-serif; 
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white; 
+      min-height: 100vh;
+    }
+    
+    .login-container, .admin-panel {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .login-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 50px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.2);
+      max-width: 400px;
+      width: 100%;
+    }
+    
+    .admin-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+      max-width: 1000px;
+      width: 100%;
+    }
+    
+    .form-control {
+      border-radius: 12px;
+      background: rgba(255,255,255,0.95);
+      border: none;
+      color: #333;
+    }
+    
+    .btn-login {
+      background: linear-gradient(45deg, #28a745, #20c997);
+      border: none;
+      padding: 15px 40px;
+      font-weight: bold;
+      border-radius: 12px;
+    }
+    
+    .btn-edit, .btn-delete {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    
+    .btn-edit { background: #ffc107; color: #000; }
+    .btn-delete { background: #dc3545; color: white; }
+    
+    .vehicle-item {
+      background: rgba(255,255,255,0.1);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .hidden { display: none; }
+    
+    @media (max-width: 768px) {
+      .vehicle-item { flex-direction: column; text-align: center; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-container">
+    <div class="login-card">
+      <h2 class="text-center mb-4">
+        <i class="fas fa-shield-alt me-2"></i>Admin Panel
+      </h2>
+      <div class="mb-4">
+        <label class="form-label fw-bold">Password</label>
+        <input type="password" class="form-control form-control-lg" id="adminPassword" placeholder="Enter admin password">
+      </div>
+      <button class="btn btn-login w-100" onclick="loginAdmin()">
+        <i class="fas fa-sign-in-alt me-2"></i>Login
+      </button>
+    </div>
+  </div>
+  
+  <!-- Admin Panel -->
+  <div id="adminPanel" class="admin-panel hidden">
+    <div class="admin-card">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+          <i class="fas fa-list me-2"></i>Registered Vehicles
+        </h2>
+        <button class="btn btn-secondary" onclick="logoutAdmin()">
+          <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </button>
+      </div>
+      <div id="vehicleList" class="mb-4">
+        <p class="text-center text-muted py-4">Loading vehicles...</p>
+      </div>
+      <div class="text-center">
+        <a href="index .html" class="btn btn-outline-light btn-lg">
+          <i class="fas fa-home me-2"></i>Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_PASSWORD = 'admin123'; // Change this password
+    
+    function loginAdmin() {
+      const password = document.getElementById('adminPassword').value;
+      if (password === ADMIN_PASSWORD) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        loadAdminVehicles();
+      } else {
+        alert('❌ Wrong password!');
+      }
+    }
+    
+    function logoutAdmin() {
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('vehicleList').innerHTML = '<p class="text-center text-muted py-4">Loading vehicles...</p>';
+    }
+    
+    function loadAdminVehicles() {
+      const vehicles = JSON.parse(localStorage.getItem('registeredVehicles') || '[]');
+      const container = document.getElementById('vehicleList');
+      
+      if (vehicles.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted py-4">No registered vehicles</p>';
+        return;
+      }
+      
+      container.innerHTML = vehicles.map((v, index) => `
+        <div class="vehicle-item">
+          <div>
+            <strong>${v.type}</strong> - ${v.regNo}<br>
+            <small>${v.owner} | ${v.phone} | ${v.location}</small><br>
+            <small>Registered: ${new Date(v.date).toLocaleDateString()}</small>
+          </div>
+          <div>
+            <button class="btn btn-edit me-2" onclick="editVehicle(${index})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-delete" onclick="deleteVehicle(${index})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function editVehicle(index) {
+      const vehicles = JSON.parse(localStorage.getItem('registeredVehicles') || '[]');
+      const vehicle = vehicles[index];
+      
+      const newOwner = prompt('New owner name:', vehicle.owner);
+      if (newOwner) {
+        vehicle.owner = newOwner;
+        localStorage.setItem('registeredVehicles', JSON.stringify(vehicles));
+        loadAdminVehicles();
+        alert('✅ Vehicle updated!');
+      }
+    }
+    
+    function deleteVehicle(index) {
+      if (confirm('Delete this vehicle?')) {
+        const vehicles = JSON.parse(localStorage.getItem('registeredVehicles') || '[]');
+        vehicles.splice(index, 1);
+        localStorage.setItem('registeredVehicles', JSON.stringify(vehicles));
+        loadAdminVehicles();
+        alert('🗑️ Vehicle deleted!');
+      }
+    }
+    
+    // Enter key login
+    document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') loginAdmin();
+    });
+  </script>
+</body>
+</html>
